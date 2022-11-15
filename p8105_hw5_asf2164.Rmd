@@ -1,0 +1,61 @@
+---
+title: "homework"
+output: github_document
+date: "2022-11-14"
+---
+
+## Problem 2
+
+```{r}
+library(tidyverse) 
+
+homicide_df =
+  read_csv("Data/homicide-data.csv") %>%
+  janitor::clean_names()
+```
+
+This dataset includes homicides in the 50 largest US cities. The variables included in this dataset is uid, reported_date (date that the homicide was report), victim_last (last name of victim), victim_first (first name of victim), victim_age (age of victim), victim_sex (sex of victim), city (city where the homicide occured), state (state where the homicide occured), lat (latitude where the homicide occured), lon (longitude where the homicide occured), and disposition (current state of the case). 
+
+```{r}
+library(dplyr) 
+
+homicide_df %>% 
+  mutate(city_state = paste(city,state, sep=', ')) %>% 
+  group_by(city_state) %>% 
+  summarize(n_obs = n_distinct(uid))
+
+homicide_df %>% 
+  mutate(city_state = paste(city,state, sep=', ')) %>% 
+  group_by(city_state, disposition) %>% 
+  filter(disposition == "Closed without arrest" | disposition == "Open/No arrest", na.rm=TRUE) %>% 
+  summarize(n_obs = n_distinct(uid))
+
+homicide_df %>% filter(city_state == "Baltimore, MD") 
+unsolved_test = 
+  prop.test(homicide_df$, city_state, p = NULL,
+          alternative = c("two.sided"), conf.level = 0.95, correct = TRUE)
+```
+
+## Problem 3
+
+```{r}
+library(tidyverse)
+library(rvest)
+
+sample = rnorm(30, mean = 0, sd = 5)
+
+test_results = t.test(sample)
+
+sim_t_test = function(true_mean) {
+  sample = rnorm(30, mean = 0, sd = 5)
+
+test_results = t.test(sample)
+
+test_results %>% 
+  broom::tidy()
+}
+
+test_df = sim_t_test(5000)
+```
+
+group by, summarize, filter
