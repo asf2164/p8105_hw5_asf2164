@@ -40,7 +40,8 @@ openhomicides_df =
 
 totalhomicide_df = 
   left_join(totalhomicide_df, openhomicides_df, by = "city_state") %>% 
-  mutate(totalhomicides = as.numeric(totalhomicides), openhomicides = as.numeric(openhomicides))
+  mutate(totalhomicides = as.numeric(totalhomicides), openhomicides = as.numeric(openhomicides)) %>% 
+  drop_na() 
 
 ```
 
@@ -48,45 +49,49 @@ Proportion of homicides in Baltimore, MD:
 
 ```{r}
 
-baltimore_df = 
-    totalhomicide_df %>% 
-    filter(city_state == "Baltimore, MD") %>% 
-    select(-city_state) 
 
-city_prop_df = 
-  prop.test(x = baltimore_df %>% pull(as.numeric(baltimore_df[2])), n = baltimore_df %>% pull(as.numeric(baltimore_df[1]), p = NULL, alternative = c("two.sided"), conf.level = 0.95, correct = TRUE)
-            
-city_prop_df %>% 
+city_df = 
+    totalhomicide_df %>% 
+    filter(city_state == "Baltimore, MD") 
+
+prop_function = function(city_df) {
+  city_prop_test = 
+  prop.test(x = city_df %>% pull(openhomicides), n = city_df %>% pull(totalhomicides), p = NULL, alternative = c("two.sided"), conf.level = 0.95, correct = TRUE) %>% 
   broom::tidy()
+
+prop_keep = 
+  city_prop_test %>% 
+  select(estimate, conf.high, conf.low) 
+}
   
 
-prop_test = function(city_state) {
-  city_choice_df = 
-    totalhomicide_df %>% 
-    filter(city_state == "Baltimore, MD") %>% 
-    select(-city_state)
-    
-  city_prop_df = 
-    city_choice_df %>% 
-  prop.test(x = totalhomicides, n = totalhomicides)%>% 
-  broom::tidy()
-}
+baltimore_prop_test = 
+  prop_function(city_df) %>% 
+  mutate(city_state = "Baltimore,MD")
 
-baltimore_df = 
-  totalhomicide_df %>% 
-  filter(city_state == "Baltimore, MD") %>% 
-  select(-city_state) 
 
-p_value_baltimore = prop_test(baltimore_df) 
 
 ```
 
 Proportion of homicides in all 50 cities: 
 
 ```{r}
-allcities = function(city) {
+allcity_df = tibble() 
+
+for (i in 1:50) {
+  city_df = 
+    totalhomicide_df %>% 
+    filter(city_state == totalhomicide_df[[i,1]])
+
+allcity_results = 
+  prop_function(city_df) %>% 
+  mutate(city_state = totalhomicide_df[[i,1]])
+
+allcity_df = bind_rows(allcity_df, allcity_results)
   
 }
+
+
   
 ```
 
