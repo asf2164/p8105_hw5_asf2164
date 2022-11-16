@@ -95,6 +95,11 @@ allcity_df = bind_rows(allcity_df, allcity_results)
   
 ```
 
+```{r}
+ggplot(allcity_df, aes(x = city_state, y = estimate)) + geom_col(position = "dodge") +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = "dodge", width = 0.2)
+```
+
 
 ## Problem 3
 
