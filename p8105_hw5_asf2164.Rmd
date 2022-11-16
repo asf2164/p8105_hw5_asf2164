@@ -38,24 +38,46 @@ openhomicides_df =
   group_by(city_state) %>% 
   summarize(openhomicides = n())
 
-totalhomicide_df = left_join(totalhomicide_df, openhomicides_df, by = "city_state")
+totalhomicide_df = 
+  left_join(totalhomicide_df, openhomicides_df, by = "city_state") %>% 
+  mutate(totalhomicides = as.numeric(totalhomicides), openhomicides = as.numeric(openhomicides))
 
 ```
 
 Proportion of homicides in Baltimore, MD: 
 
 ```{r}
+
 baltimore_df = 
     totalhomicide_df %>% 
-    filter(str_detect(city_state, "Baltimore")) %>% 
-    select(-city_state)
+    filter(city_state == "Baltimore, MD") %>% 
+    select(-city_state) 
+
+city_prop_df = 
+  prop.test(x = baltimore_df %>% pull(as.numeric(baltimore_df[2])), n = baltimore_df %>% pull(as.numeric(baltimore_df[1]), p = NULL, alternative = c("two.sided"), conf.level = 0.95, correct = TRUE)
+            
+city_prop_df %>% 
+  broom::tidy()
   
-baltimore_test = function(x, n) {
-  prop.test(x, n) %>% 
+
+prop_test = function(city_state) {
+  city_choice_df = 
+    totalhomicide_df %>% 
+    filter(city_state == "Baltimore, MD") %>% 
+    select(-city_state)
+    
+  city_prop_df = 
+    city_choice_df %>% 
+  prop.test(x = totalhomicides, n = totalhomicides)%>% 
   broom::tidy()
 }
 
-p_value_baltimore = baltimore_test(baltimore_df[1,2], baltimore_df[1,1])
+baltimore_df = 
+  totalhomicide_df %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  select(-city_state) 
+
+p_value_baltimore = prop_test(baltimore_df) 
 
 ```
 
