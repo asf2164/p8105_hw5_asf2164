@@ -17,24 +17,54 @@ homicide_df =
 This dataset includes homicides in the 50 largest US cities. The variables included in this dataset is uid, reported_date (date that the homicide was report), victim_last (last name of victim), victim_first (first name of victim), victim_age (age of victim), victim_sex (sex of victim), city (city where the homicide occured), state (state where the homicide occured), lat (latitude where the homicide occured), lon (longitude where the homicide occured), and disposition (current state of the case). 
 
 ```{r}
-library(dplyr) 
 
-homicide_df %>% 
-  mutate(city_state = paste(city,state, sep=', ')) %>% 
+library(tidyverse) 
+library(dplyr)
+
+homicide_df =
+  read_csv("Data/homicide-data.csv") %>%
+  janitor::clean_names() %>% 
+  mutate(city = str_c(city,", ")) %>% 
+  mutate(city_state = paste0(city, state)) 
+  
+totalhomicide_df =
+  homicide_df %>% 
   group_by(city_state) %>% 
-  summarize(n_obs = n_distinct(uid))
+  summarize(totalhomicides = n_distinct(uid)) 
 
-homicide_df %>% 
-  mutate(city_state = paste(city,state, sep=', ')) %>% 
-  group_by(city_state, disposition) %>% 
-  filter(disposition == "Closed without arrest" | disposition == "Open/No arrest", na.rm=TRUE) %>% 
-  summarize(n_obs = n_distinct(uid))
+openhomicides_df = 
+  homicide_df %>% 
+  filter(disposition == "Closed without arrest" | disposition == "Open/No arrest",     na.rm=TRUE) %>% 
+  group_by(city_state) %>% 
+  summarize(openhomicides = n())
 
-homicide_df %>% filter(city_state == "Baltimore, MD") 
-unsolved_test = 
-  prop.test(homicide_df$, city_state, p = NULL,
-          alternative = c("two.sided"), conf.level = 0.95, correct = TRUE)
+totalhomicide_df = left_join(totalhomicide_df, openhomicides_df, by = "city_state")
+
 ```
+
+Proportion of homicides in Baltimore, MD: 
+
+```{r}
+baltimore_df = 
+    totalhomicide_df %>% 
+    filter(str_detect(city_state, "Baltimore")) %>% 
+    select(-city_state)
+  
+baltimore_test = 
+  prop.test(baltimore_df[,2], baltimore_df[,1]) %>% 
+  broom::tidy()
+
+```
+
+Proportion of homicides in all 50 cities: 
+
+```{r}
+allcities = function(city) {
+  
+}
+  
+```
+
 
 ## Problem 3
 
@@ -42,20 +72,61 @@ unsolved_test =
 library(tidyverse)
 library(rvest)
 
+set.seed(1)
+
 sample = rnorm(30, mean = 0, sd = 5)
 
 test_results = t.test(sample)
 
-sim_t_test = function(true_mean) {
-  sample = rnorm(30, mean = 0, sd = 5)
+sim_t_test = function(n, mean, sd) {
+sample = rnorm(n, mean, sd)
 
 test_results = t.test(sample)
 
 test_results %>% 
-  broom::tidy()
+  broom::tidy() %>% 
+  mutate(mean = mean) %>% 
+  select(p.value, mean)
 }
 
-test_df = sim_t_test(5000)
+test_df = sim_t_test(n = 30, mean = 0, sd = 5)
+
+output = vector("list", 5000)
+
+for (i in 1:5000) {
+  output[[i]] = sim_t_test(n = 30, mean = 0, sd = 5)
+}
+
+ttest_sim_results = bind_rows(output) 
+
+variousmeans_sim_results = tibble(
+  p.value = c()
+  mean = c()
+)
+
+for (mean in 0:6) {
+  output = vector("list", 5000)
+  for (i in 1:5000) {
+  output[[i]] = sim_t_test(n = 30, mean = mean, sd = 5)
+  }
+  sim_results = bind_rows(output)
+  variousmeans_sim_results = full_join(variousmeans_sim_results, sim_results, by = mean)
+}
 ```
+
+
+```{r}
+propplot_df =
+  variousmeans_sim_results %>% 
+  group_by(mean) %>% 
+  summarize(total = n()) 
+
+reject_df = 
+  variousmeans_sim_results %>% 
+  group_by(mean) %>% 
+  filter(p.value < 0.05, na.rm=TRUE) %>% 
+  summarize(reject = n()) 
+```
+
 
 group by, summarize, filter
