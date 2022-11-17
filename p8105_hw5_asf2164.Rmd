@@ -219,9 +219,10 @@ reject_df =
   filter(p.value < 0.05, na.rm=TRUE) %>% 
   summarize(reject = n()) 
 
-propplot_df = left_join(propplot_df, reject_df, by = "mean")
+propplot_df = left_join(propplot_df, reject_df, by = "mean") %>% 
+  mutate(proportion = reject/total)
 
-ggplot(propplot_df, aes(x = mean, y = reject)) + 
+ggplot(propplot_df, aes(x = mean, y = proportion)) + 
   geom_point() + geom_smooth(se = FALSE) + scale_x_continuous(breaks = seq(0, 6, by = 1)) +  labs(
     title = "Proportion that the null was rejected",
     x = "Mean",
